@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update manifest version
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          jq --arg v "$VERSION" '.version = $v' extension/manifest.json > /tmp/manifest.json
+          mv /tmp/manifest.json extension/manifest.json
+          echo "Updated manifest.json to version $VERSION"
+
+      - name: Package extension
+        run: |
+          VERSION=${{ steps.version.outputs.VERSION }}
+          cd extension
+          zip -r "../price-tracker-v${VERSION}.zip" . \
+            --exclude "*.DS_Store" \
+            --exclude "*__MACOSX*"
+          echo "Created price-tracker-v${VERSION}.zip"
+          ls -lh "../price-tracker-v${VERSION}.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Price Tracker v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## Price Tracker v${{ steps.version.outputs.VERSION }}
+
+            ### Install
+            1. Download **price-tracker-v${{ steps.version.outputs.VERSION }}.zip** below
+            2. Unzip it
+            3. Open `chrome://extensions` → Enable **Developer mode** → **Load unpacked** → select the unzipped folder
+
+            ### What's included
+            - Chrome MV3 extension (Side Panel)
+            - Tracks prices from Amazon, Flipkart, Reliance Digital, Croma, Myntra, Meesho, and generic sites
+            - Desktop notifications on price changes
+            - Price history per item
+            - Edit item name & URL
+            - Configurable check schedule and notification thresholds
+            - Zero backend required — all data stored locally in `chrome.storage.local`
+
+            ### Requirements
+            Chrome 114 or later (Side Panel API)
+          files: price-tracker-v${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
