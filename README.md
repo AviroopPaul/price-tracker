@@ -41,18 +41,17 @@ A Chrome extension that tracks product prices from Amazon, Flipkart, Reliance Di
 
 > **Requires Chrome 114+** (Side Panel API)
 
-1. **Clone or download** this repository
-   ```bash
-   git clone https://github.com/apavirooppaul/price-tracker.git
-   ```
+1. Go to the [**Releases page**](https://github.com/AviroopPaul/price-tracker/releases/latest) and download **`price-tracker-vX.X.X.zip`**
 
-2. Open **`chrome://extensions`** in Chrome
+2. Unzip the downloaded file
 
-3. Enable **Developer mode** (toggle in the top-right corner)
+3. Open **`chrome://extensions`** in Chrome
 
-4. Click **Load unpacked** and select the `extension/` folder
+4. Enable **Developer mode** (toggle in the top-right corner)
 
-5. Click the **Price Tracker icon** in your toolbar — the side panel opens
+5. Click **Load unpacked** and select the unzipped folder
+
+6. Click the **Price Tracker icon** in your toolbar — the side panel opens
 
 ---
 
