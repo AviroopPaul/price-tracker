@@ -1,5 +1,0 @@
-backend/__pycache__/
-backend/*.pyc
-backend/*.db
-backend/.env
-node_modules/
