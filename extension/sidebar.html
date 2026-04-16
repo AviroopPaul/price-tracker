@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Price Tracker</title>
+  <link rel="stylesheet" href="sidebar.css" />
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <svg class="header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      <span class="header-title">Price Tracker</span>
+    </div>
+    <div class="header-actions">
+      <button id="btn-refresh-all" class="icon-btn" title="Refresh all prices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+      </button>
+      <a href="settings.html" target="_blank" class="icon-btn" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Add item form -->
+  <section class="add-section">
+    <div class="add-form">
+      <input id="inp-url" type="url" class="url-input" placeholder="Paste product URL (Amazon, Flipkart…)" />
+      <input id="inp-name" type="text" class="name-input" placeholder="Custom name (optional)" />
+      <button id="btn-add" class="btn-add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add Item
+      </button>
+    </div>
+    <div id="add-status" class="add-status hidden"></div>
+  </section>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <span id="stat-total">0 items</span>
+    <span id="stat-drops" class="stat-drop hidden"></span>
+    <span id="last-updated" class="stat-time"></span>
+  </div>
+
+  <!-- Items table -->
+  <main class="table-wrap">
+    <div id="empty-state" class="empty-state">
+      <svg viewBox="0 0 64 64" fill="none" stroke="#cbd5e1" stroke-width="2">
+        <rect x="8" y="16" width="48" height="36" rx="4"/>
+        <line x1="8" y1="26" x2="56" y2="26"/>
+        <line x1="20" y1="16" x2="20" y2="52"/>
+      </svg>
+      <p>No items tracked yet.</p>
+      <p class="empty-sub">Paste a product URL above to get started.</p>
+    </div>
+
+    <table id="items-table" class="items-table hidden">
+      <thead>
+        <tr>
+          <th class="col-name">Product</th>
+          <th class="col-price">Price</th>
+          <th class="col-change">Change</th>
+          <th class="col-actions"></th>
+        </tr>
+      </thead>
+      <tbody id="items-body"></tbody>
+    </table>
+  </main>
+
+  <!-- Edit modal -->
+  <div id="edit-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span>Edit Item</span>
+        <button id="edit-close" class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body edit-form-body">
+        <input type="hidden" id="edit-id" />
+        <div class="edit-field">
+          <label class="edit-label">Name</label>
+          <input id="edit-name" type="text" class="edit-input" placeholder="Product name" />
+        </div>
+        <div class="edit-field">
+          <label class="edit-label">URL</label>
+          <input id="edit-url" type="url" class="edit-input" placeholder="https://…" />
+        </div>
+        <div class="edit-actions">
+          <button id="edit-cancel" class="btn-edit-cancel">Cancel</button>
+          <button id="edit-save" class="btn-edit-save">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History modal -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="modal-title">Price History</span>
+        <button id="modal-close" class="icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
