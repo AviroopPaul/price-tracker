@@ -123,6 +123,11 @@ function renderRows() {
             </svg>
           </button>
         </div>
+        <button class="row-btn overflow-btn" data-id="${item.id}" data-name="${item.name}" title="More actions">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+          </svg>
+        </button>
       </td>`;
 
     tr.querySelector(".item-name").addEventListener("click", () =>
@@ -181,14 +186,23 @@ $("btn-add").addEventListener("click", async () => {
 
 $("inp-url").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btn-add").click(); });
 
+// ── Skeleton helpers ──────────────────────────────────────────────────────────
+
+function showPriceSkeleton(id) {
+  const row = $("items-body").querySelector(`tr[data-id="${id}"]`);
+  if (!row) return;
+  row.querySelector(".cell-price").innerHTML = `<span class="price-skeleton"></span>`;
+  row.querySelector(".cell-change").innerHTML = `<span class="price-skeleton price-skeleton-sm"></span>`;
+}
+
 // ── Event delegation (refresh / history / delete) ─────────────────────────────
 
 $("items-body").addEventListener("click", async (e) => {
-  const refreshBtn = e.target.closest(".refresh-btn");
-  const deleteBtn  = e.target.closest(".delete-btn");
-  const histBtn    = e.target.closest(".history-btn");
-
-  const editBtn = e.target.closest(".edit-btn");
+  const refreshBtn  = e.target.closest(".refresh-btn");
+  const deleteBtn   = e.target.closest(".delete-btn");
+  const histBtn     = e.target.closest(".history-btn");
+  const editBtn     = e.target.closest(".edit-btn");
+  const overflowBtn = e.target.closest(".overflow-btn");
 
   if (editBtn) {
     const id = Number(editBtn.dataset.id);
@@ -200,10 +214,14 @@ $("items-body").addEventListener("click", async (e) => {
     const id = Number(refreshBtn.dataset.id);
     refreshBtn.classList.add("spin");
     refreshBtn.disabled = true;
+    showPriceSkeleton(id);
     const r = await msg("CHECK_ITEM", { id });
     refreshBtn.classList.remove("spin");
     refreshBtn.disabled = false;
-    if (!r?.success) showStatus("Could not fetch price — site may have blocked the request.", "error");
+    if (!r?.success) {
+      showStatus("Could not fetch price — site may have blocked the request.", "error");
+      renderRows();
+    }
   }
 
   if (deleteBtn) {
@@ -215,6 +233,55 @@ $("items-body").addEventListener("click", async (e) => {
   if (histBtn) {
     const id = Number(histBtn.dataset.id);
     await openHistoryModal(id, histBtn.dataset.name);
+  }
+
+  if (overflowBtn) {
+    openOverflowMenu(Number(overflowBtn.dataset.id), overflowBtn.dataset.name);
+  }
+});
+
+// ── Overflow actions menu ─────────────────────────────────────────────────────
+
+let overflowItemId = null;
+
+function openOverflowMenu(id, name) {
+  overflowItemId = id;
+  $("overflow-title").textContent = name;
+  $("overflow-overlay").classList.remove("hidden");
+}
+
+function closeOverflowMenu() {
+  $("overflow-overlay").classList.add("hidden");
+  overflowItemId = null;
+}
+
+$("overflow-overlay").addEventListener("click", (e) => {
+  if (e.target === $("overflow-overlay")) closeOverflowMenu();
+});
+
+$("overflow-close").addEventListener("click", closeOverflowMenu);
+
+$("overflow-body").addEventListener("click", async (e) => {
+  const btn = e.target.closest(".overflow-action");
+  if (!btn || overflowItemId == null) return;
+  const id = overflowItemId;
+  closeOverflowMenu();
+
+  if (btn.dataset.action === "edit") {
+    const item = items.find((i) => i.id === id);
+    if (item) openEditModal(item);
+  } else if (btn.dataset.action === "refresh") {
+    showPriceSkeleton(id);
+    const r = await msg("CHECK_ITEM", { id });
+    if (!r?.success) {
+      showStatus("Could not fetch price — site may have blocked the request.", "error");
+      renderRows();
+    }
+  } else if (btn.dataset.action === "history") {
+    const item = items.find((i) => i.id === id);
+    await openHistoryModal(id, item?.name || "");
+  } else if (btn.dataset.action === "delete") {
+    await msg("DELETE_ITEM", { id });
   }
 });
 
