@@ -208,7 +208,6 @@ $("items-body").addEventListener("click", async (e) => {
 
   if (deleteBtn) {
     const id = Number(deleteBtn.dataset.id);
-    if (!confirm("Remove this item from tracking?")) return;
     await msg("DELETE_ITEM", { id });
     // Storage listener will re-render
   }
