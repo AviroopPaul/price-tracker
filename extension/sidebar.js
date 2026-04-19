@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 let items = [];
+const refreshingIds = new Set();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -149,12 +150,27 @@ async function loadItems() {
   renderRows();
 }
 
+// Toggle .narrow on the table when the sidebar is too thin to show all action buttons
+new ResizeObserver(([entry]) => {
+  $("items-table").classList.toggle("narrow", entry.contentRect.width < 300);
+}).observe(document.querySelector(".table-wrap"));
+
 // Live updates: re-render whenever storage changes (background writes new prices)
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.items) {
-    items = changes.items.newValue || [];
-    renderRows();
+  if (area !== "local" || !changes.items) return;
+  const newItems = changes.items.newValue || [];
+  // Remove from refreshingIds any item whose lastChecked advanced (price came in)
+  for (const id of [...refreshingIds]) {
+    const prev = items.find((i) => i.id === id);
+    const next = newItems.find((i) => i.id === id);
+    if (!next || (prev && prev.lastChecked !== next.lastChecked)) {
+      refreshingIds.delete(id);
+    }
   }
+  items = newItems;
+  renderRows();
+  // Re-apply skeletons for items still in-flight
+  for (const id of refreshingIds) showPriceSkeleton(id);
 });
 
 // ── Add item ──────────────────────────────────────────────────────────────────
@@ -214,11 +230,13 @@ $("items-body").addEventListener("click", async (e) => {
     const id = Number(refreshBtn.dataset.id);
     refreshBtn.classList.add("spin");
     refreshBtn.disabled = true;
+    refreshingIds.add(id);
     showPriceSkeleton(id);
     const r = await msg("CHECK_ITEM", { id });
     refreshBtn.classList.remove("spin");
     refreshBtn.disabled = false;
     if (!r?.success) {
+      refreshingIds.delete(id);
       showStatus("Could not fetch price — site may have blocked the request.", "error");
       renderRows();
     }
@@ -271,9 +289,11 @@ $("overflow-body").addEventListener("click", async (e) => {
     const item = items.find((i) => i.id === id);
     if (item) openEditModal(item);
   } else if (btn.dataset.action === "refresh") {
+    refreshingIds.add(id);
     showPriceSkeleton(id);
     const r = await msg("CHECK_ITEM", { id });
     if (!r?.success) {
+      refreshingIds.delete(id);
       showStatus("Could not fetch price — site may have blocked the request.", "error");
       renderRows();
     }
@@ -291,9 +311,12 @@ $("btn-refresh-all").addEventListener("click", async () => {
   const btn = $("btn-refresh-all");
   btn.querySelector("svg").style.animation = "spin .8s linear infinite";
   btn.disabled = true;
+  items.forEach((item) => { refreshingIds.add(item.id); showPriceSkeleton(item.id); });
   const r = await msg("CHECK_ALL");
   btn.querySelector("svg").style.animation = "";
   btn.disabled = false;
+  refreshingIds.clear();
+  renderRows();
   const ok = (r?.results || []).filter((x) => x.success).length;
   showStatus(`Refreshed ${r?.results?.length ?? 0} items — ${ok} updated.`, "success");
 });

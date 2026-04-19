@@ -128,6 +128,7 @@ body {
 .table-wrap {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   background: #fff;
 }
 
@@ -368,16 +369,16 @@ body {
 
 /* ── Skeleton loader ── */
 @keyframes skeleton-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  from { background-position: -100% 0; }
+  to   { background-position:  200% 0; }
 }
 .price-skeleton {
   display: inline-block;
   width: 60px;
   height: 15px;
-  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background: linear-gradient(90deg, #cbd5e1 0%, #f1f5f9 50%, #cbd5e1 100%);
   background-size: 200% 100%;
-  animation: skeleton-shimmer 1.2s linear infinite;
+  animation: skeleton-shimmer 1.4s linear infinite;
   border-radius: 4px;
   vertical-align: middle;
 }
@@ -398,11 +399,11 @@ body {
 /* ── Overflow button (three-dot) ── */
 .overflow-btn { display: none; }
 
-@media (max-width: 320px) {
-  .row-actions { display: none; }
-  .overflow-btn { display: flex; }
-  .col-actions { width: 32px; }
-}
+.items-table.narrow .row-actions  { display: none; }
+.items-table.narrow .overflow-btn { display: flex; }
+.items-table.narrow .col-actions  { width: 32px; }
+.items-table.narrow .col-change,
+.items-table.narrow .cell-change  { display: none; }
 
 .overflow-body { padding: 0; }
 .overflow-action {
